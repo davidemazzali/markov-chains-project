@@ -45,22 +45,21 @@ def numerator_objective_distrib(x):
     return res
 
 def sample_from_unif():
-    return [np.random.randint(2) for _ in range(n)]
+    return [2*(np.random.randint(2))-1 for _ in range(n)]
 
 def metropolis(x_0, base_chain, num_steps):
     x = x_0
     for s in range(num_steps):
-        print(s)
-        accepted = False
-        while not accepted:
-            y = sample_from_unif()
-            coin = np.random.uniform(0,1)
-            if coin <= acceptance_prob(x, y, base_chain):
-                x = y
-                accepted = True
+        y = sample_from_unif()
+        coin = np.random.uniform(0,1)
+        print(x, y, acceptance_prob(x, y, base_chain))
+        if coin <= acceptance_prob(x, y, base_chain):
+            x = y
+        else:
+            x = x
     return x
 
-n = 100 # number of vertices in the graph
+n = 10 # number of vertices in the graph
 x_star = generate_labels(n) # ground truth labelling of vertices
 
 # paramters
