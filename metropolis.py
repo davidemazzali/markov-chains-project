@@ -11,19 +11,21 @@ def compute_h(G, d, r, i, j):
         h = np.log(1 / r)
     else:
         a, b = compute_a_b(d, r)
-        h = (1 - a / len(G.nodes)) / (1 - b / len(G.nodes))
+        h = np.log((1 - a / len(G.nodes)) / (1 - b / len(G.nodes)))
     return h
 
 
 def ratio_pi(G, d, r, y, x):
     N = len(G.nodes)
-    ratio = 1
+    sum = 0
     for i in range(N - 1):
         for j in range(i + 1, N):
             if x[i] * x[j] != y[i] * y[j]:
                 h_i_j = compute_h(G, d, r, i, j)
                 temp = y[i] * y[j] - x[i] * x[j]
-                ratio *= h_i_j * temp
+                sum += h_i_j * temp
+
+    ratio = np.exp(sum)
     return ratio
 
 
