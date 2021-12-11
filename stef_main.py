@@ -19,10 +19,16 @@ def generate_graph(a,b,x):
                 G[v].add(u)
     return G
 
+"""
 def quality(x,y):
     x = np.array(x)
     y = np.array(y)
     return np.sum(x==y)/len(x)
+"""
+def quality(x,y):
+    x = np.array(x)
+    y = np.array(y)
+    return (1/len(x)) * np.abs(np.sum(x*y))
 
 def flip_base_chain(x,y):
     return 1/n
@@ -58,7 +64,6 @@ def ratio_p_flip(y,x,i):
 
 def sample_from_unif():
     return [np.random.randint(2) for _ in range(n)]
-
 
 def sample_from_flip(x):
     #select random element in x
