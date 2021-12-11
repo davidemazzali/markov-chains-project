@@ -15,8 +15,41 @@ def compute_h(G, d, r, i, j):
     return h
 
 
+def ratio_pi_flip(G, d, r, y, x):
+    i = np.equal(y, x).nonzero()[0][0]
+    N = len(G.nodes)
+    a, b = compute_a_b(d, r)
+    ratio = 1
+    for j in range(N):
+        # no self-loops in G
+        if j != i:
+            if j in G[i]:
+                if x[i] == x[j] and y[i] == y[j]:
+                    ratio *= 1
+                if x[i] == x[j] and y[i] != y[j]:
+                    ratio *= b / a
+                if x[i] != x[j] and y[i] == y[j]:
+                    ratio *= a / b
+                if x[i] != x[j] and y[i] != y[j]:
+                    ratio *= 1
+            else:
+                if x[i] == x[j] and y[i] == y[j]:
+                    ratio *= 1
+                if x[i] == x[j] and y[i] != y[j]:
+                    ratio *= (1 - b / N) / (1 - a / N)
+                if x[i] != x[j] and y[i] == y[j]:
+                    ratio *= (1 - a / N) / (1 - b / N)
+                if x[i] != x[j] and y[i] != y[j]:
+                    ratio *= 1
+    return ratio
+
+
 def ratio_pi(G, d, r, y, x):
     N = len(G.nodes)
+
+    if np.sum(x != y) == 1:
+        return ratio_pi_flip(G, d, r, y, x)
+
     sum = 0
     for i in range(N - 1):
         for j in range(i + 1, N):
@@ -43,8 +76,21 @@ def metropolis_algorithm(G, d, r, base_chain, n_iters):
     return x
 
 
-# UNIFORM BASE CHAIN FUNCTIONS
+# BASE CHAINS
 
-def sample_from_unif(x, N):
+def sample_from_unif(x, N=None):
+    if N is None:
+        N = len(x)
     y = 2 * np.random.randint(2, size=N) - 1
+    return y, 1 / N, 1 / N
+
+
+def sample_from_flip(x, N=None):
+    if N is None:
+        N = len(x)
+    # select random element in x
+    i = np.random.randint(len(x))
+    # flip it
+    y = np.copy(x)
+    y[i] *= -1
     return y, 1 / N, 1 / N
