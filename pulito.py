@@ -30,7 +30,15 @@ def sample_from_flip(x):
     return y
 
 def ratio(x,y):
-    
+    i=np.argwhere(x!=y)[0][0]
+    ratio=1
+    for j in range(n):
+        if j!=i:
+            if j in list(G.neighbors(i)):
+                ratio*=(a/b)**(-x[i]*x[j])
+            else:
+                ratio*=((1-a/n)/(1-b/n))**(-x[i]*x[j])
+    return ratio
 
 def acceptance_prob(x,y):
     return min(1, ratio(x,y))
@@ -43,6 +51,8 @@ def metropolis():
         y=sample_from_flip(x)
         coin=np.random.uniform(0,1)
         if coin<=acceptance_prob(x,y):
+            x=y
+    return x
             
 
 
