@@ -1,5 +1,8 @@
 import numpy as np
 from nx_utils import *
+from tqdm.notebook import tqdm
+from utils import estimate_quality, visualize_quality
+import matplotlib.pyplot as plt
 
 
 # GENERAL FUNCTIONS
@@ -62,9 +65,12 @@ def ratio_pi(G, d, r, y, x):
     return ratio
 
 
-def metropolis_algorithm(G, d, r, base_chain, n_iters):
+def metropolis_algorithm(G, d, r, base_chain, n_iters, x_star, use_tqdm=False):
     x, _, _ = sample_from_unif(x=None, N=len(G.nodes))  # Compute x_0
-    for iter in range(n_iters):
+
+    quality_list = []
+    iterable = range(n_iters) if not use_tqdm else tqdm(range(n_iters))
+    for iter in iterable:
         # Get new state
         y, psi_x_y, psi_y_x = base_chain(x, len(G.nodes))
 
@@ -73,6 +79,11 @@ def metropolis_algorithm(G, d, r, base_chain, n_iters):
         acceptance_prob = min(1, (psi_y_x / psi_x_y)) * ratio_pi(G, d, r, y, x)
         if coin <= acceptance_prob:
             x = y
+
+        quality = estimate_quality(x, x_star)
+        quality_list.append(quality)
+    visualize_quality(quality_list)
+
     return x
 
 
