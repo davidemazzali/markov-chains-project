@@ -121,30 +121,37 @@ def metropolis(x_0, base_chain, num_steps):
             x = x
     return x
 
-def houda_houda_houdayer(x_1, x_2, base_chain, num_steps):
+def mixed_metropolis_houdayer(x_1, x_2, base_chain, num_steps):
     for s in range(num_steps):
         if s % (num_steps/10) == 0:
-            print(quality(x, x_star))
+            print(quality(x_1, x_star), quality(x_2, x_star))
         
-        y_1, y_2 = houda_houda_houdayer_move(x_1, x_2)
-
-        coin = np.random.uniform(0,1)
-        #print(x, y, acceptance_prob(x, y, base_chain))
-        if coin <= acceptance_prob(x_1, y_1, base_chain):
-            x_1 = y_1
+        if s % 10 == 0:
+            x_1, x_2 = houda_houda_houdayer_move(x_1, x_2)
         else:
-            x_1 = x_1
-
-        coin = np.random.uniform(0,1)
-        #print(x, y, acceptance_prob(x, y, base_chain))
-        if coin <= acceptance_prob(x_2, y_2, base_chain):
-            x_2 = y_2
-        else:
-            x_2 = x_2
+            y_1 = copy.deepcopy(x_1)
+            i = sample_from_flip()
+            y_1[i] = -x_1[i]
+            coin = np.random.uniform(0,1)
+            #print(x, y, acceptance_prob(x, y, base_chain))
+            if coin <= acceptance_prob(x_1, y_1, base_chain):
+                x_1 = y_1
+            else:
+                x_1 = x_1
+            
+            y_2 = copy.deepcopy(x_2)
+            i = sample_from_flip()
+            y_2[i] = -x_2[i]
+            coin = np.random.uniform(0,1)
+            #print(x, y, acceptance_prob(x, y, base_chain))
+            if coin <= acceptance_prob(x_2, y_2, base_chain):
+                x_2 = y_2
+            else:
+                x_2 = x_2
     return x_1, x_2
 
 def dfs(i, y, visited):
-    visited.add(y)
+    visited.add(i)
     for j in G[i]:
         if y[j] == -1 and j not in visited:
             dfs(j, y, visited)
@@ -168,12 +175,12 @@ def houda_houda_houdayer_move(x_1, x_2):
     
     return x_1_prime, x_2_prime
 
-n = 200 # number of vertices in the graph
+n = 100 # number of vertices in the graph
 x_star = generate_labels(n) # ground truth labelling of vertices
 
 # paramters
 a = n/2
-b = n/5
+b = 1
 
 G = generate_graph(a, b, x_star) # graph generated according to stochastic block model
 
@@ -183,8 +190,9 @@ N = 2**n # number of states in the chain
 base_chain = flip_base_chain
 
 print("aaaaaaaaaaaa", 1/np.sqrt(n))
-x = metropolis(sample_from_unif(), base_chain, 1000000)
-print(quality(x, x_star))
+#x = metropolis(sample_from_unif(), base_chain, 1000000)
+x_1, x_2 = mixed_metropolis_houdayer(sample_from_unif(), sample_from_unif(), base_chain, 1000000)
+print(quality(x_1, x_star), quality(x_2, x_star))
 #print("aaaaaaaaaaaa", 1/np.sqrt(n))
 #for _ in range(10):
 #    print(quality(sample_from_unif(), x_star))
