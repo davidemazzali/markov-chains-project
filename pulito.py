@@ -1,5 +1,6 @@
 import numpy as np
 import networkx as nx
+from tqdm import tqdm
 
 def generate_labels():
     x=np.random.randint(2, size=n)
@@ -13,18 +14,15 @@ def generate_graph(x):
         for j in range(i+1, n):
             if x[i]==x[j]:
                 if np.random.uniform(0,1)<=a/n:
-                    print(f'i:{i}, j:{j}')
                     G.add_edge(i,j)
             else:
                 if np.random.uniform(0,1)<=b/n:
-                    print(f'i:{i}, j:{j}')
                     G.add_edge(i, j)
     return G
 
 
 def sample_from_flip(x):
     i=np.random.randint(n)
-    print(i)
     y=x.copy()
     y[i]=-x[i]
     return y
@@ -32,9 +30,10 @@ def sample_from_flip(x):
 def ratio(x,y):
     i=np.argwhere(x!=y)[0][0]
     ratio=1
+    neighbors=set(G.neighbors(i))
     for j in range(n):
         if j!=i:
-            if j in list(G.neighbors(i)):
+            if j in neighbors:
                 ratio*=(a/b)**(-x[i]*x[j])
             else:
                 ratio*=((1-a/n)/(1-b/n))**(-x[i]*x[j])
@@ -43,25 +42,71 @@ def ratio(x,y):
 def acceptance_prob(x,y):
     return min(1, ratio(x,y))
 
+def quality(x_star, x):
+    return np.abs(np.sum(x_star*x))/n
 
 def metropolis():
-    x=generate_labels(n)
-    for iter in range(iterations):
+    x=generate_labels()
+    for iter in tqdm(range(iterations)):
+        # if iter%500==0:
+        #     print(f'\tquality: {quality(x_star, x)}')
         #flip
         y=sample_from_flip(x)
         coin=np.random.uniform(0,1)
         if coin<=acceptance_prob(x,y):
             x=y
     return x
+
+def dfs(y,i, cluster):
+    cluster.add(i)
+    for j in G.neighbors(i):
+        if y[j]==-1 and j not in cluster:
+            dfs(y, j, cluster)
+
+def houdayer_move(x1, x2):
+    y=x1*x2
+    indices=np.argwhere(y==-1)[0]
+    i=indices[np.random.randint(len(indices))]
+    cluster=set()
+    dfs(y,i, cluster)
+    for j in cluster:
+        x1[j]=-x1[j]
+        x2[j]=-x2[j]
+
+
+
+def houdayer(metropolis_steps):
+    x1=generate_labels()
+    x2=generate_labels()
+    for iter in tqdm(range(iterations)):
+        if iter%metropolis_steps==0:
+            #make move
+            houdayer_move(x1, x2)
             
+        y1=sample_from_flip(x1)
+        coin=np.random.uniform(0,1)
+        if coin<=acceptance_prob(x1,y1):
+            x1=y1
 
+        y2=sample_from_flip(x2)
+        coin=np.random.uniform(0,1)
+        if coin<=acceptance_prob(x2,y2):
+            x2=y2
+    return x1,x2
 
+iterations=10000
 
-iterations=10
+num_run=10
 
-n=10
+n=500
 a=5.9
 b=0.1
 
-x=generate_labels(5)
-G=generate_graph(x)
+x_star=generate_labels()
+G=generate_graph(x_star)
+
+
+for run in range(num_run):
+    x=houdayer(50)
+    print(f'Final quality: {quality(x_star, x)}')
+
