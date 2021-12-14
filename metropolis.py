@@ -1,7 +1,7 @@
 import numpy as np
 from nx_utils import *
 from tqdm.notebook import tqdm
-from utils import estimate_quality, visualize_quality
+from utils import estimate_quality, visualize_quality, sample_from_unif
 import matplotlib.pyplot as plt
 
 
@@ -83,43 +83,41 @@ def ratio_pi_basic(G, d, r, y, x):
     return ratio
 
 
+def metropolis_step(G, d, r, base_chain, x):
+    # Get new state
+    y, psi_x_y, psi_y_x = base_chain(x, len(G.nodes))
+
+    # Decide should I stay or should I go
+    coin = np.random.uniform(0, 1)
+    acceptance_prob = min(1, (psi_y_x / psi_x_y) * ratio_pi(G, d, r, y, x))
+    if coin <= acceptance_prob:
+        x = y
+
+    return x
+
+
+
+
+
 def metropolis_algorithm(G, d, r, base_chain, n_iters, x_star, use_tqdm=False):
     x, _, _ = sample_from_unif(x=None, N=len(G.nodes))  # Compute x_0
 
     quality_list = []
     iterable = range(n_iters) if not use_tqdm else tqdm(range(n_iters))
     for iter in iterable:
-        # Get new state
-        y, psi_x_y, psi_y_x = base_chain(x, len(G.nodes))
+        # New state
+        x = metropolis_step(G, d, r, base_chain, x)
 
-        # Decide whether to move or to stay
-        coin = np.random.uniform(0, 1)
-        acceptance_prob = min(1, (psi_y_x / psi_x_y) * ratio_pi(G, d, r, y, x))
-        if coin <= acceptance_prob:
-            x = y
-
+        # Quality
         quality = estimate_quality(x, x_star)
         quality_list.append(quality)
     visualize_quality(quality_list)
 
-    return x
+    return x, quality_list
 
 
-# BASE CHAINS
-
-def sample_from_unif(x, N=None):
-    if N is None:
-        N = len(x)
-    y = 2 * np.random.randint(2, size=N) - 1
-    return y, 1 / N, 1 / N
 
 
-def sample_from_flip(x, N=None):
-    if N is None:
-        N = len(x)
-    # select random element in x
-    i = np.random.randint(len(x))
-    # flip it
-    y = np.copy(x)
-    y[i] *= -1
-    return y, 1 / N, 1 / N
+
+
+
