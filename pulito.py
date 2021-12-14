@@ -78,23 +78,34 @@ def houdayer_move(x1, x2):
 def houdayer(metropolis_steps):
     x1=generate_labels()
     x2=generate_labels()
+    neq = np.all(x1 == x2)
+
     for iter in tqdm(range(iterations)):
-        if iter%metropolis_steps==0:
-            #make move
-            houdayer_move(x1, x2)
+        if neq:
+            if iter%metropolis_steps==0:
+                #make move
+                houdayer_move(x1, x2)
+                
+            y1=sample_from_flip(x1)
+            coin=np.random.uniform(0,1)
+            if coin<=acceptance_prob(x1,y1):
+                x1=y1
+
+            y2=sample_from_flip(x2)
+            coin=np.random.uniform(0,1)
+            if coin<=acceptance_prob(x2,y2):
+                x2=y2
             
-        y1=sample_from_flip(x1)
-        coin=np.random.uniform(0,1)
-        if coin<=acceptance_prob(x1,y1):
-            x1=y1
+            neq = np.all(x1 == x2)
+        else:
+            y1=sample_from_flip(x1)
+            coin=np.random.uniform(0,1)
+            if coin<=acceptance_prob(x1,y1):
+                x1=y1
+            
+    return (x1,x2) if neq else (x1,x1)
 
-        y2=sample_from_flip(x2)
-        coin=np.random.uniform(0,1)
-        if coin<=acceptance_prob(x2,y2):
-            x2=y2
-    return x1,x2
-
-iterations=10000
+iterations=100000
 
 num_run=10
 
@@ -106,7 +117,12 @@ x_star=generate_labels()
 G=generate_graph(x_star)
 
 
-for run in range(num_run):
-    x=houdayer(50)
-    print(f'Final quality: {quality(x_star, x)}')
 
+"""
+for run in range(num_run):
+    x=metropolis()
+    print(f'Final quality: {quality(x_star, x)}')
+"""
+for run in range(num_run):
+    x1,x2=houdayer(50)
+    print(f'Final quality: {max(quality(x_star, x1),quality(x_star, x2))}')
