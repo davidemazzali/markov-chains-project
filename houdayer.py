@@ -2,6 +2,9 @@ from metropolis import metropolis_step
 from nx_utils import *
 from tqdm.notebook import tqdm
 from utils import estimate_quality, visualize_quality, sample_from_unif
+from networkx.algorithms import node_connected_component
+import networkx as nx
+import time
 
 
 def dfs(G, y, i, cluster):
@@ -11,7 +14,7 @@ def dfs(G, y, i, cluster):
             dfs(G, y, j, cluster)
 
 
-def houdayer_move(G, x1, x2):
+def houdayer_move_v1(G, x1, x2):
     y = x1 * x2
     indices = np.argwhere(y == -1)
     i = indices[np.random.randint(len(indices))][0]
@@ -19,7 +22,26 @@ def houdayer_move(G, x1, x2):
     dfs(G, y, i, cluster)
     new_x1 = np.copy(x1)
     new_x2 = np.copy(x2)
+    print("Houdayer - Flipping %d nodes" % len(cluster))
     for j in cluster:
+        new_x1[j] = x2[j]
+        new_x2[j] = x1[j]
+
+    return new_x1, new_x2
+
+
+def houdayer_move_v2(G, x1, x2):
+    y = x1 * x2
+    i = np.random.choice(np.argwhere(y == -1).flatten())
+    removed_indices = np.argwhere(y == 1).flatten()
+    temp_G = nx.Graph.copy(G)
+    temp_G.remove_nodes_from(removed_indices)
+    cluster = node_connected_component(temp_G, i)
+    new_x1 = np.copy(x1)
+    new_x2 = np.copy(x2)
+    print("Houdayer - Flipping %d nodes" % len(cluster))
+    for j in cluster:
+        assert x2[j] != x1[j]
         new_x1[j] = x2[j]
         new_x2[j] = x1[j]
 
@@ -40,7 +62,10 @@ def houdayer_algorithm(G, d, r, base_chain, n_iters, x_star, houdayer_period=10,
                 x2 = metropolis_step(G, d, r, base_chain, x2)
                 neq = np.any(x1 != x2)
             else:  # Do Houdayer move
-                x1, x2 = houdayer_move(G, x1, x2)
+                #start = time.time()
+                x1, x2 = houdayer_move_v1(G, x1, x2)
+                #end = time.time()
+                #print("Time for operation: %f" % (end - start))
         else:
             x1 = metropolis_step(G, d, r, base_chain, x1)
 
