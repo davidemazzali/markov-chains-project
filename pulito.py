@@ -48,8 +48,6 @@ def quality(x_star, x):
 def metropolis():
     x=generate_labels()
     for iter in tqdm(range(iterations)):
-        # if iter%500==0:
-        #     print(f'\tquality: {quality(x_star, x)}')
         #flip
         y=sample_from_flip(x)
         coin=np.random.uniform(0,1)
@@ -65,20 +63,20 @@ def dfs(y,i, cluster):
 
 def houdayer_move(x1, x2):
     y=x1*x2
-    indices=np.argwhere(y==-1)[0]
-    i=indices[np.random.randint(len(indices))]
+    indices=np.argwhere(y==-1)
+    i=indices[np.random.randint(len(indices))][0]
     cluster=set()
     dfs(y,i, cluster)
     for j in cluster:
-        x1[j]=-x1[j]
-        x2[j]=-x2[j]
+            x1[j]=-x1[j]
+            x2[j]=-x2[j]
 
 
 
 def houdayer(metropolis_steps):
     x1=generate_labels()
     x2=generate_labels()
-    neq = np.all(x1 == x2)
+    neq = np.any(x1 != x2)
 
     for iter in tqdm(range(iterations)):
         if neq:
@@ -105,7 +103,7 @@ def houdayer(metropolis_steps):
             
     return (x1,x2) if neq else (x1,x1)
 
-iterations=100000
+iterations=10000
 
 num_run=10
 
@@ -118,11 +116,11 @@ G=generate_graph(x_star)
 
 
 
-"""
+
 for run in range(num_run):
     x=metropolis()
     print(f'Final quality: {quality(x_star, x)}')
-"""
-for run in range(num_run):
-    x1,x2=houdayer(50)
-    print(f'Final quality: {max(quality(x_star, x1),quality(x_star, x2))}')
+
+# for run in range(num_run):
+#     x1,x2=houdayer(50)
+#     print(f'Final quality: {max(quality(x_star, x1),quality(x_star, x2))}')
