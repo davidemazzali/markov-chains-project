@@ -25,17 +25,24 @@ def houdayer_move(G, x1, x2):
 
     return new_x1, new_x2
 
+
 def houdayer_algorithm(G, d, r, base_chain, n_iters, x_star, houdayer_period=10, use_tqdm=False):
     x1, _, _ = sample_from_unif(x=None, N=len(G.nodes))  # Compute x1_0
     x2, _, _ = sample_from_unif(x=None, N=len(G.nodes))  # Compute x2_0
+    neq = np.any(x1 != x2)
     quality_list = []
     iterable = range(n_iters) if not use_tqdm else tqdm(range(n_iters))
+
     for iter in iterable:
-        if iter % houdayer_period != 0:  # Do metropolis step
+        if neq:
+            if iter % houdayer_period != 0:  # Do metropolis step
+                x1 = metropolis_step(G, d, r, base_chain, x1)
+                x2 = metropolis_step(G, d, r, base_chain, x2)
+                neq = np.any(x1 != x2)
+            else:  # Do Houdayer move
+                x1, x2 = houdayer_move(G, x1, x2)
+        else:
             x1 = metropolis_step(G, d, r, base_chain, x1)
-            x2 = metropolis_step(G, d, r, base_chain, x2)
-        else:  # Do Houdayer move
-            x1, x2 = houdayer_move(G, x1, x2)
 
         # Quality (evaluated on x1)
         quality = estimate_quality(x1, x_star)
