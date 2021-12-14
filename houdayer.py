@@ -2,7 +2,8 @@ from metropolis import metropolis_step
 from nx_utils import *
 from tqdm.notebook import tqdm
 from utils import estimate_quality, visualize_quality, sample_from_unif
-
+from networkx.algorithms import node_connected_component
+import networkx as nx
 
 def dfs(G, y, i, cluster):
     cluster.add(i)
@@ -13,13 +14,17 @@ def dfs(G, y, i, cluster):
 
 def houdayer_move(G, x1, x2):
     y = x1 * x2
-    indices = np.argwhere(y == -1)
-    i = indices[np.random.randint(len(indices))][0]
-    cluster = set()
-    dfs(G, y, i, cluster)
+    indices = np.argwhere(y == -1).flatten()
+    removed_indices = np.argwhere(y == 1).flatten()
+    i = indices[np.random.randint(len(indices))]
+    temp_G = nx.Graph.copy(G)
+    temp_G.remove_nodes_from(removed_indices)
+    cluster = node_connected_component(temp_G, i).intersection(indices)
     new_x1 = np.copy(x1)
     new_x2 = np.copy(x2)
+    print("Houdayer - Nodes with different values = %d - Flipping %d nodes" % (len(indices), len(cluster)))
     for j in cluster:
+        assert x2[j] != x1[j]
         new_x1[j] = x2[j]
         new_x2[j] = x1[j]
 
