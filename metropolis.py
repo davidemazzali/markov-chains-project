@@ -18,32 +18,17 @@ def compute_h(G, d, r, i, j):
     return h
 
 
-def ratio_pi_flip(G, d, r, y, x):
-    i = np.argwhere(x != y)[0][0]
+def ratio_pi_flip(G, a, b, i, x):
     N = len(G.nodes)
-    a, b = compute_a_b(d, r)
+
     ratio = 1
+    neighbors = set(G.neighbors(i))
     for j in range(N):
-        # no self-loops in G
         if j != i:
-            if j in G[i]:
-                if x[i] == x[j] and y[i] == y[j]:
-                    ratio *= 1
-                if x[i] == x[j] and y[i] != y[j]:
-                    ratio *= b / a
-                if x[i] != x[j] and y[i] == y[j]:
-                    ratio *= a / b
-                if x[i] != x[j] and y[i] != y[j]:
-                    ratio *= 1
+            if j in neighbors:
+                ratio *= (a / b) ** (-x[i] * x[j])
             else:
-                if x[i] == x[j] and y[i] == y[j]:
-                    ratio *= 1
-                if x[i] == x[j] and y[i] != y[j]:
-                    ratio *= (1 - b / N) / (1 - a / N)
-                if x[i] != x[j] and y[i] == y[j]:
-                    ratio *= (1 - a / N) / (1 - b / N)
-                if x[i] != x[j] and y[i] != y[j]:
-                    ratio *= 1
+                ratio *= ((1 - a / N) / (1 - b / N)) ** (-x[i] * x[j])
     return ratio
 
 
@@ -65,33 +50,15 @@ def ratio_pi(G, d, r, y, x):
     return ratio
 
 
-def ratio_pi_basic(G, d, r, y, x):
-    N = len(G.nodes)
-
-    if np.sum(x != y) == 1:
-        return ratio_pi_flip(G, d, r, y, x)
-
-    sum = 0
-    for i in range(N - 1):
-        for j in range(i + 1, N):
-            if x[i] * x[j] != y[i] * y[j]:
-                h_i_j = compute_h(G, d, r, i, j)
-                temp = y[i] * y[j] - x[i] * x[j]
-                sum += h_i_j * temp
-
-    ratio = np.exp(sum)
-    return ratio
-
-
-def metropolis_step(G, d, r, base_chain, x):
+def metropolis_step(G, a, b, base_chain, x):
     # Get new state
-    y, psi_x_y, psi_y_x = base_chain(x, len(G.nodes))
+    i, psi_x_y, psi_y_x = base_chain(x, len(G.nodes))
 
     # Decide should I stay or should I go
     coin = np.random.uniform(0, 1)
-    acceptance_prob = min(1, (psi_y_x / psi_x_y) * ratio_pi(G, d, r, y, x))
+    acceptance_prob = min(1, (psi_y_x / psi_x_y) * ratio_pi_flip(G, a, b, i, x))
     if coin <= acceptance_prob:
-        x = y
+        x[i] *= -1
 
     return x
 
@@ -101,12 +68,12 @@ def metropolis_step(G, d, r, base_chain, x):
 
 def metropolis_algorithm(G, d, r, base_chain, n_iters, x_star, use_tqdm=False):
     x, _, _ = sample_from_unif(x=None, N=len(G.nodes))  # Compute x_0
-
+    a, b = compute_a_b(d, r)
     quality_list = []
     iterable = range(n_iters) if not use_tqdm else tqdm(range(n_iters))
     for iter in iterable:
         # New state
-        x = metropolis_step(G, d, r, base_chain, x)
+        x = metropolis_step(G, a, b, base_chain, x)
 
         # Quality
         quality = estimate_quality(x, x_star)

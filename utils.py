@@ -31,6 +31,6 @@ def sample_from_flip(x, N=None):
     # select random element in x
     i = np.random.randint(len(x))
     # flip it
-    y = np.copy(x)
-    y[i] *= -1
-    return y, 1 / N, 1 / N
+    #y = np.copy(x)
+    #y[i] *= -1
+    return i, 1 / N, 1 / N
