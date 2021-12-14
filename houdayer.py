@@ -13,8 +13,8 @@ def dfs(G, y, i, cluster):
 
 def houdayer_move(G, x1, x2):
     y = x1 * x2
-    indices = np.argwhere(y == -1)[0]
-    i = indices[np.random.randint(len(indices))]
+    indices = np.argwhere(y == -1)
+    i = indices[np.random.randint(len(indices))][0]
     cluster = set()
     dfs(G, y, i, cluster)
     new_x1 = np.copy(x1)
