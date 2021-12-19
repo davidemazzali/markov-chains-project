@@ -23,7 +23,12 @@ def generate_observation_graph(d, r, N):
     p = [[prob_same_com, prob_diff_com], [prob_diff_com, prob_same_com]]
     G = stochastic_block_model(sizes, p, nodelist=None, seed=None, directed=False, selfloops=False, sparse=True)
 
-    return G
+    G_np = np.empty((N, N), dtype = bool)
+    for i in range(N):
+        for j in range(N):
+            G_np[i, j] = has_edge(G, i, j)
+
+    return G, G_np
 
 
 def has_edge(G, i, j):

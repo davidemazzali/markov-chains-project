@@ -32,6 +32,23 @@ def ratio_pi_flip(G, a, b, i, x):
     return ratio
 
 
+def ratio_giostyle(G_np, a, b, i, x):
+    N = len(G_np)
+
+    x_eq = (x == x[i])
+    x_neq = ~x_eq
+    nadj = ~G_np[i]
+
+    num_ba = np.sum(G_np[i] * x_eq)
+    num_ab = np.sum(G_np[i] * x_neq)
+    num_bnan = np.sum(nadj * x_eq)
+    num_anbn = np.sum(nadj * x_neq)
+
+    ratio = (b / a) ** (num_ba - num_ab) * ((1 - b / N) / (1 - a / N)) ** (num_bnan - 1 - num_anbn)
+
+    return ratio
+
+
 def ratio_pi(G, d, r, y, x):
     N = len(G.nodes)
 
@@ -50,13 +67,13 @@ def ratio_pi(G, d, r, y, x):
     return ratio
 
 
-def metropolis_step(G, a, b, base_chain, x):
+def metropolis_step(G, a, b, base_chain, x, G_np):
     # Get new state
     i, psi_x_y, psi_y_x = base_chain(x, len(G.nodes))
 
     # Decide should I stay or should I go
     coin = np.random.uniform(0, 1)
-    acceptance_prob = min(1, (psi_y_x / psi_x_y) * ratio_pi_flip(G, a, b, i, x))
+    acceptance_prob = min(1, (psi_y_x / psi_x_y) * ratio_giostyle(G_np, a, b, i, x))
     if coin <= acceptance_prob:
         x[i] *= -1
 
@@ -66,14 +83,14 @@ def metropolis_step(G, a, b, base_chain, x):
 
 
 
-def metropolis_algorithm(G, d, r, base_chain, n_iters, x_star, use_tqdm=False, visualize=False):
+def metropolis_algorithm(G, d, r, base_chain, n_iters, x_star, G_np, use_tqdm=False, visualize=False):
     x, _, _ = sample_from_unif(x=None, N=len(G.nodes))  # Compute x_0
     a, b = compute_a_b(d, r)
     quality_list = []
     iterable = range(n_iters) if not use_tqdm else tqdm(range(n_iters))
     for iter in iterable:
         # New state
-        x = metropolis_step(G, a, b, base_chain, x)
+        x = metropolis_step(G, a, b, base_chain, x, G_np)
 
         # Quality
         quality = estimate_quality(x, x_star)

@@ -46,7 +46,7 @@ def houdayer_move_v2(G, x1, x2):
     return new_x1, new_x2
 
 
-def houdayer_algorithm(G, d, r, base_chain, n_iters, x_star, houdayer_period=10, use_tqdm=False):
+def houdayer_algorithm(G, d, r, base_chain, n_iters, x_star, G_np, houdayer_period=10, use_tqdm=False):
     x1, _, _ = sample_from_unif(x=None, N=len(G.nodes))  # Compute x1_0
     x2, _, _ = sample_from_unif(x=None, N=len(G.nodes))  # Compute x2_0
     a, b = compute_a_b(d, r)
@@ -57,8 +57,8 @@ def houdayer_algorithm(G, d, r, base_chain, n_iters, x_star, houdayer_period=10,
     for iter in iterable:
         if neq:
             if iter % houdayer_period != 0:  # Do metropolis step
-                x1 = metropolis_step(G, a, b, base_chain, x1)
-                x2 = metropolis_step(G, a, b, base_chain, x2)
+                x1 = metropolis_step(G, a, b, base_chain, x1, G_np)
+                x2 = metropolis_step(G, a, b, base_chain, x2, G_np)
                 neq = np.any(x1 != x2)
             else:  # Do Houdayer move
                 #start = time.time()
