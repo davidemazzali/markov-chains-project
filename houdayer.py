@@ -56,21 +56,21 @@ def houdayer_algorithm(G, d, r, base_chain, n_iters, x_star, G_np, houdayer_peri
 
     for iter in iterable:
         if neq:
-            if iter % houdayer_period != 0:  # Do metropolis step
-                x1 = metropolis_step(G, a, b, base_chain, x1, G_np)
-                x2 = metropolis_step(G, a, b, base_chain, x2, G_np)
-                neq = np.any(x1 != x2)
-            else:  # Do Houdayer move
+            if iter % houdayer_period == 0:  # Do metropolis step
                 #start = time.time()
                 x1, x2 = houdayer_move_v1(G, x1, x2)
                 #end = time.time()
                 #print("Time for operation: %f" % (end - start))
+            
+            x1 = metropolis_step(G, a, b, base_chain, x1, G_np)
+            x2 = metropolis_step(G, a, b, base_chain, x2, G_np)
+            neq = np.any(x1 != x2)
         else:
-            x1 = metropolis_step(G, d, r, base_chain, x1)
+            x1 = metropolis_step(G, d, r, base_chain, x1, G_np)
 
         # Quality (evaluated on x1)
         quality = estimate_quality(x1, x_star)
         quality_list.append(quality)
-    visualize_quality(quality_list)
+    #visualize_quality(quality_list)
 
     return x1, quality_list
