@@ -99,7 +99,7 @@ def metropolis_step(G, d, r, base_chain, x):
 
 
 
-def metropolis_algorithm(G, d, r, base_chain, n_iters, x_star, use_tqdm=False):
+def metropolis_algorithm(G, d, r, base_chain, n_iters, x_star, use_tqdm=False, visualize=False):
     x, _, _ = sample_from_unif(x=None, N=len(G.nodes))  # Compute x_0
 
     quality_list = []
@@ -111,7 +111,9 @@ def metropolis_algorithm(G, d, r, base_chain, n_iters, x_star, use_tqdm=False):
         # Quality
         quality = estimate_quality(x, x_star)
         quality_list.append(quality)
-    visualize_quality(quality_list)
+
+    if visualize:
+        visualize_quality(quality_list)
 
     return x, quality_list
 
